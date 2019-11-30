@@ -32,10 +32,10 @@ func main() {
 
 	// log.Println(result)
 	MakeOutputDir(filepath.Join(path, "./OUTPUT"))
-	prosesDir(dirname, newDir)
+	ProsesDir(dirname, newDir)
 }
 
-func prosesDir(dirname, newDir string) {
+func ProsesDir(dirname, newDir string) {
 	result, _ := scanDir(dirname)
 
 	for _, source := range result {
@@ -43,11 +43,12 @@ func prosesDir(dirname, newDir string) {
 		if source.Type == "file" {
 			MoveToDir(source.Name, source.Path, newDir)
 		} else {
-			prosesDir(dirname+"/"+source.Name, newDir)
+			ProsesDir(dirname+"/"+source.Name, newDir)
 		}
 	}
 }
 
+/** we scan whats inside directory **/
 func scanDir(dirname string) ([]Item, error) {
 	items := []Item{}
 	all := Items{items}
@@ -78,6 +79,7 @@ func scanDir(dirname string) ([]Item, error) {
 	return all.Data, nil
 } // end func
 
+/** if output folder not found, create it **/
 func MakeOutputDir(path string) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		os.Mkdir(path, os.ModePerm)
@@ -85,14 +87,28 @@ func MakeOutputDir(path string) {
 	}
 }
 
-func MoveToDir(filename, dir, newDir string) {
+/** move file inside folder to output folder **/
+
+func MoveToDir(filename, dir, newDir string) error {
+	path, _ := os.Getwd()
+	oldLocation := filepath.Join(dir, filename)
+	newLocation := filepath.Join(path, newDir+"/"+filename)
+
+	err := os.Rename(oldLocation, newLocation)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	log.Println(filename, "Copied!")
+	return nil
+}
+
+/** copy file inside folder to output folder **/
+func CopyToDir(filename, dir, newDir string) {
 	path, _ := os.Getwd()
 	sourceFile := filepath.Join(dir, filename)
 	destinationFile := filepath.Join(path, newDir+"/"+filename)
-	// err := os.Rename(oldLocation, newLocation)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
 
 	input, err := ioutil.ReadFile(sourceFile)
 	if err != nil {
