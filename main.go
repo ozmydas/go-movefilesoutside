@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "errors"
+	"flag"
 	"io/ioutil"
 	"log"
 	"os"
@@ -30,20 +31,32 @@ func main() {
 	newDir := "OUTPUT"
 	path, _ := os.Getwd()
 
+	/****/
+	var mode string
+	flag.StringVar(&mode, "opt", "copy", "Mode : copy / move")
+	flag.Parse()
+	/****/
+
 	// log.Println(result)
 	MakeOutputDir(filepath.Join(path, "./OUTPUT"))
-	ProsesDir(dirname, newDir)
+	ProsesDir(dirname, newDir, mode)
 }
 
-func ProsesDir(dirname, newDir string) {
+func ProsesDir(dirname, newDir, mode string) {
 	result, _ := scanDir(dirname)
 
 	for _, source := range result {
 		// log.Printf("%v - %v", source.Name, source.Type)
 		if source.Type == "file" {
-			MoveToDir(source.Name, source.Path, newDir)
+			if mode == "move" {
+				MoveToDir(source.Name, source.Path, newDir)
+			} else if mode == "copy" {
+				CopyToDir(source.Name, source.Path, newDir)
+			} else {
+				log.Println("invalid option", mode)
+			}
 		} else {
-			ProsesDir(dirname+"/"+source.Name, newDir)
+			ProsesDir(dirname+"/"+source.Name, newDir, mode)
 		}
 	}
 }
@@ -100,7 +113,7 @@ func MoveToDir(filename, dir, newDir string) error {
 		return err
 	}
 
-	log.Println(filename, "Copied!")
+	log.Println(filename, "Moved!")
 	return nil
 }
 
