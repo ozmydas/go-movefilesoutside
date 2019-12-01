@@ -27,23 +27,30 @@ func (rows *Items) AddItem(row Item) []Item {
 /******/
 
 func main() {
-	dirname := "./FILES"
-	newDir := "OUTPUT"
-	path, _ := os.Getwd()
-
-	/****/
 	var mode string
+	var inputDir string
+	var outputDir string
+
 	flag.StringVar(&mode, "opt", "copy", "Mode : copy / move")
+	flag.StringVar(&inputDir, "in", "FILES", "Directory to Scan")
+	flag.StringVar(&outputDir, "out", "OUTPUT", "Directory to store result")
 	flag.Parse()
+
 	/****/
 
-	// log.Println(result)
-	MakeOutputDir(filepath.Join(path, "./OUTPUT"))
+	dirname := "./" + inputDir
+	newDir := outputDir
+
+	MakeOutputDir(outputDir)
 	ProsesDir(dirname, newDir, mode)
 }
 
 func ProsesDir(dirname, newDir, mode string) {
-	result, _ := scanDir(dirname)
+	result, err := scanDir(dirname)
+
+	if err != nil {
+		log.Println(err)
+	}
 
 	for _, source := range result {
 		// log.Printf("%v - %v", source.Name, source.Type)
@@ -69,7 +76,7 @@ func scanDir(dirname string) ([]Item, error) {
 
 	files, err := ioutil.ReadDir(dirname)
 	if err != nil {
-		return items, nil
+		return items, err
 	}
 
 	for _, file := range files {
@@ -94,9 +101,11 @@ func scanDir(dirname string) ([]Item, error) {
 
 /** if output folder not found, create it **/
 func MakeOutputDir(path string) {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		os.Mkdir(path, os.ModePerm)
-		log.Println("-- Creating OUTPUT directory --")
+	dirpath, _ := os.Getwd()
+	fpath := filepath.Join(dirpath, "./"+path)
+	if _, err := os.Stat(fpath); os.IsNotExist(err) {
+		os.Mkdir(fpath, os.ModePerm)
+		log.Println("-- Creating", path, "directory --")
 	}
 }
 
