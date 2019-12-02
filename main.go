@@ -17,6 +17,9 @@ type Items struct {
 	Data []Item
 }
 
+var allcount int
+var limit int
+
 /******/
 
 func (rows *Items) AddItem(row Item) []Item {
@@ -31,9 +34,11 @@ func main() {
 	var inputDir string
 	var outputDir string
 
-	flag.StringVar(&mode, "opt", "copy", "Mode : copy / move")
+	// define option flag and parse
+	flag.StringVar(&mode, "mode", "copy", "Mode : copy / move")
 	flag.StringVar(&inputDir, "in", "FILES", "Directory to Scan")
 	flag.StringVar(&outputDir, "out", "OUTPUT", "Directory to store result")
+	flag.IntVar(&limit, "limit", 1, "Limit of max files to execute")
 	flag.Parse()
 
 	/****/
@@ -41,53 +46,86 @@ func main() {
 	dirname := "./" + inputDir
 	newDir := outputDir
 
+	// before begin operation, make sure output folder was created
 	MakeOutputDir(outputDir)
+
+	// main operation
 	ProsesDir(dirname, newDir, mode)
-}
+} // end func
 
 func ProsesDir(dirname, newDir, mode string) {
-	result, err := scanDir(dirname)
+	if allcount > limit {
+		log.Println("Limit Reached - only can process max", limit, "files, to bypass limit please add flag -limit NUMBER")
+		return
 
-	if err != nil {
-		log.Println(err)
 	}
 
+	result, count, err := scanDir(dirname)
+
+	if err != nil {
+		log.Println("ERROR detected -", err)
+	}
+
+	allcount = allcount + count
+
+	// looping each file and folder from scanned result
+	i := 1
 	for _, source := range result {
-		// log.Printf("%v - %v", source.Name, source.Type)
+		// check limit for first directory
+		if allcount == 0 {
+			if i >= limit {
+				log.Println("Limit Reached - only can process max", limit, "files, to bypass limit please add flag -limit NUMBER")
+				i++
+				return
+			}
+		}
+
+		// execute
 		if source.Type == "file" {
+			// if scanned result is file, decide next step based on opt flag to copy or move files
 			if mode == "move" {
-				MoveToDir(source.Name, source.Path, newDir)
+				err := MoveToDir(source.Name, source.Path, newDir)
+				if err != nil {
+					log.Println("ERROR detected -", err)
+				}
 			} else if mode == "copy" {
-				CopyToDir(source.Name, source.Path, newDir)
+				err := CopyToDir(source.Name, source.Path, newDir)
+				if err != nil {
+					log.Println("ERROR detected -", err)
+				}
 			} else {
 				log.Println("invalid option", mode)
 			}
 		} else {
+			// if scanned result was a directory, recursive scan that directory
 			ProsesDir(dirname+"/"+source.Name, newDir, mode)
 		}
 	}
 }
 
 /** we scan whats inside directory **/
-func scanDir(dirname string) ([]Item, error) {
+func scanDir(dirname string) ([]Item, int, error) {
 	items := []Item{}
 	all := Items{items}
 	path, _ := os.Getwd()
+	count := 0
 
+	// scanning directoruy here
 	files, err := ioutil.ReadDir(dirname)
 	if err != nil {
-		return items, err
+		return items, count, err
 	}
 
 	for _, file := range files {
-		// log.Println(file.IsDir())
-
 		tipe := "folder"
 
+		// if detected as file
 		if file.IsDir() == false {
 			tipe = "file"
+			count++
 		}
 
+		// store to array struct
 		temp := Item{
 			Name: file.Name(),
 			Path: filepath.Join(path, dirname+"/"),
@@ -96,7 +134,7 @@ func scanDir(dirname string) ([]Item, error) {
 		all.AddItem(temp)
 	}
 
-	return all.Data, nil
+	return all.Data, count, nil
 } // end func
 
 /** if output folder not found, create it **/
@@ -104,21 +142,23 @@ func MakeOutputDir(path string) {
 	dirpath, _ := os.Getwd()
 	fpath := filepath.Join(dirpath, "./"+path)
 	if _, err := os.Stat(fpath); os.IsNotExist(err) {
+		// create new directory if not exist
 		os.Mkdir(fpath, os.ModePerm)
 		log.Println("-- Creating", path, "directory --")
 	}
 }
 
 /** move file inside folder to output folder **/
-
 func MoveToDir(filename, dir, newDir string) error {
 	path, _ := os.Getwd()
+	// define old location and new location to moving file
 	oldLocation := filepath.Join(dir, filename)
 	newLocation := filepath.Join(path, newDir+"/"+filename)
 
+	// execute
 	err := os.Rename(oldLocation, newLocation)
 	if err != nil {
-		log.Println(err)
+		// log.Println(err)
 		return err
 	}
 
@@ -127,23 +167,25 @@ func MoveToDir(filename, dir, newDir string) error {
 }
 
 /** copy file inside folder to output folder **/
-func CopyToDir(filename, dir, newDir string) {
+func CopyToDir(filename, dir, newDir string) error {
 	path, _ := os.Getwd()
+	// define file fullpath and target to copying file
 	sourceFile := filepath.Join(dir, filename)
 	destinationFile := filepath.Join(path, newDir+"/"+filename)
 
+	// read content of source file
 	input, err := ioutil.ReadFile(sourceFile)
 	if err != nil {
-		log.Println(err)
-		return
+		// log.Println(err)
+		return err
 	}
-
+	// write content to target destination file
 	err = ioutil.WriteFile(destinationFile, input, 0644)
 	if err != nil {
-		log.Println("Error creating", destinationFile)
-		log.Println(err)
-		return
+		// log.Println(err)
+		return err
 	}
 
 	log.Println(filename, "Copied!")
+	return nil
 }
