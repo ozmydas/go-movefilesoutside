@@ -38,7 +38,7 @@ func main() {
 	flag.StringVar(&mode, "mode", "copy", "Mode : copy / move")
 	flag.StringVar(&inputDir, "in", "FILES", "Directory to Scan")
 	flag.StringVar(&outputDir, "out", "OUTPUT", "Directory to store result")
-	flag.IntVar(&limit, "limit", 1, "Limit of max files to execute")
+	flag.IntVar(&limit, "limit", 10, "Limit of max files to execute")
 	flag.Parse()
 
 	/****/
@@ -68,13 +68,14 @@ func ProsesDir(dirname, newDir, mode string) {
 
 	allcount = allcount + count
 
+	/** for now can't use this, maybe later **/
 	// check if any file to proccess
-	if allcount > 1 {
-		log.Println("-- Files Detected :", allcount, "file(s) --")
-	} else {
-		log.Println("-- Empty Folder! Can't Find Files to Process Or File Already Moved --")
-		return
-	}
+	// if allcount > 1 {
+	// 	log.Println("-- Files Detected :", allcount, "file(s) --")
+	// } else {
+	// 	log.Println("-- Empty Folder! Can't Find Files to Process Or File Already Moved --")
+	// 	return
+	// }
 
 	// looping each file and folder from scanned result
 	i := 1
