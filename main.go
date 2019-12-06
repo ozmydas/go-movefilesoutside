@@ -25,7 +25,7 @@ var limit int
 func (rows *Items) AddItem(row Item) []Item {
 	rows.Data = append(rows.Data, row)
 	return rows.Data
-}
+} // end func
 
 /******/
 
@@ -68,6 +68,14 @@ func ProsesDir(dirname, newDir, mode string) {
 
 	allcount = allcount + count
 
+	// check if any file to proccess
+	if allcount > 1 {
+		log.Println("-- Files Detected :", allcount, "file(s) --")
+	} else {
+		log.Println("-- Empty Folder! Can't Find Files to Process Or File Already Moved --")
+		return
+	}
+
 	// looping each file and folder from scanned result
 	i := 1
 	for _, source := range result {
@@ -86,22 +94,23 @@ func ProsesDir(dirname, newDir, mode string) {
 			if mode == "move" {
 				err := MoveToDir(source.Name, source.Path, newDir)
 				if err != nil {
-					log.Println("ERROR detected -", err)
+					log.Println("ERROR on", source.Name, "-", err)
 				}
 			} else if mode == "copy" {
 				err := CopyToDir(source.Name, source.Path, newDir)
 				if err != nil {
-					log.Println("ERROR detected -", err)
+					log.Println("ERROR on", source.Name, "-", err)
 				}
 			} else {
-				log.Println("invalid option", mode)
+				log.Println("-- ERROR Invalid Mode! please use -mode flag with copy or paste", mode, "--")
+				return
 			}
 		} else {
 			// if scanned result was a directory, recursive scan that directory
 			ProsesDir(dirname+"/"+source.Name, newDir, mode)
 		}
 	}
-}
+} // end func
 
 /** we scan whats inside directory **/
 func scanDir(dirname string) ([]Item, int, error) {
@@ -146,7 +155,7 @@ func MakeOutputDir(path string) {
 		os.Mkdir(fpath, os.ModePerm)
 		log.Println("-- Creating", path, "directory --")
 	}
-}
+} // end func
 
 /** move file inside folder to output folder **/
 func MoveToDir(filename, dir, newDir string) error {
@@ -164,7 +173,7 @@ func MoveToDir(filename, dir, newDir string) error {
 
 	log.Println(filename, "Moved!")
 	return nil
-}
+} // end func
 
 /** copy file inside folder to output folder **/
 func CopyToDir(filename, dir, newDir string) error {
@@ -188,4 +197,4 @@ func CopyToDir(filename, dir, newDir string) error {
 
 	log.Println(filename, "Copied!")
 	return nil
-}
+} // end func
