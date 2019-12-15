@@ -38,7 +38,7 @@ func main() {
 	flag.StringVar(&mode, "mode", "copy", "Mode : copy / move")
 	flag.StringVar(&inputDir, "in", "FILES", "Directory to Scan")
 	flag.StringVar(&outputDir, "out", "OUTPUT", "Directory to store result")
-	flag.IntVar(&limit, "limit", 10, "Limit of max files to execute")
+	flag.IntVar(&limit, "limit", 100, "Limit of max files to execute")
 	flag.Parse()
 
 	/****/
